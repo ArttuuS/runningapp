@@ -32,7 +32,7 @@ export default function HomeScreen() {
       }
 
       let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
       });
 
       setLocation(location.coords);
@@ -56,7 +56,7 @@ export default function HomeScreen() {
   useEffect(() => {
     let interval;
     if (isTracking) {
-      interval = setInterval(() => updateLocation(routeCoordinates), 5000); // Pass routeCoordinates as an argument
+      interval = setInterval(() => updateLocation(routeCoordinates), 500); // Pass routeCoordinates as an argument
     } else {
       clearInterval(interval);
     }
@@ -66,10 +66,8 @@ export default function HomeScreen() {
   async function updateLocation(prevCoordinates) {
     try {
       let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
       });
-
-      console.log("New Location:", location.coords);
 
       setLocation(location.coords);
 
@@ -124,6 +122,22 @@ export default function HomeScreen() {
     return deg * (Math.PI / 180);
   }
 
+  // Function to interpolate points between two coordinates
+  function interpolatePoints(coord1, coord2, numPoints) {
+    const latDelta = (coord2.latitude - coord1.latitude) / (numPoints + 1);
+    const lonDelta = (coord2.longitude - coord1.longitude) / (numPoints + 1);
+    const interpolatedPoints = [];
+
+    for (let i = 1; i <= numPoints; i++) {
+      interpolatedPoints.push({
+        latitude: coord1.latitude + latDelta * i,
+        longitude: coord1.longitude + lonDelta * i,
+      });
+    }
+
+    return interpolatedPoints;
+  }
+
   if (error) {
     return <Text>{error}</Text>;
   }
@@ -143,6 +157,17 @@ export default function HomeScreen() {
     longitudeDelta: 0.0221,
   };
 
+  // Interpolating points for smoother polyline
+  const interpolatedRouteCoordinates = [];
+  for (let i = 0; i < routeCoordinates.length - 1; i++) {
+    const interpolatedPoints = interpolatePoints(
+      routeCoordinates[i],
+      routeCoordinates[i + 1],
+      10 // Number of points to interpolate between each pair of coordinates
+    );
+    interpolatedRouteCoordinates.push(...interpolatedPoints);
+  }
+
   return (
     <View style={styles.container}>
       <MapView style={styles.map} initialRegion={initialRegion} ref={mapRef}>
@@ -153,11 +178,11 @@ export default function HomeScreen() {
             image={navigationArrow}
           />
         )}
-        {routeCoordinates.length > 1 && (
+        {interpolatedRouteCoordinates.length > 1 && (
           <Polyline
-            coordinates={routeCoordinates}
-            strokeColor="#000"
-            strokeWidth={2}
+            coordinates={interpolatedRouteCoordinates}
+            strokeColor="#0000FF"
+            strokeWidth={8}
           />
         )}
       </MapView>
