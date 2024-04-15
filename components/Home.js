@@ -56,20 +56,24 @@ export default function HomeScreen() {
   useEffect(() => {
     let interval;
     if (isTracking) {
-      interval = setInterval(updateLocation, 5000); // Update location every 5 seconds
+      interval = setInterval(() => updateLocation(routeCoordinates), 5000); // Pass routeCoordinates as an argument
     } else {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isTracking]);
+  }, [isTracking, routeCoordinates]); // Add routeCoordinates to the dependency array
 
-  async function updateLocation() {
+  async function updateLocation(prevCoordinates) {
     try {
       let location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
 
+      console.log("New Location:", location.coords);
+
       setLocation(location.coords);
+
+      // Use callback form of setRouteCoordinates to ensure it's based on the latest state
       setRouteCoordinates((prevCoordinates) => [
         ...prevCoordinates,
         {
@@ -78,16 +82,24 @@ export default function HomeScreen() {
         },
       ]);
 
-      if (routeCoordinates.length > 1) {
-        const previousCoordinate =
-          routeCoordinates[routeCoordinates.length - 2];
-        const newCoordinate = routeCoordinates[routeCoordinates.length - 1];
-        const newDistance = calculateDistance(
-          previousCoordinate,
-          newCoordinate
-        );
-        setDistance(distance + newDistance);
-      }
+      // Pass prevCoordinates as an argument and use it within setDistance callback
+      setDistance((prevDistance) => {
+        if (prevCoordinates.length > 0) {
+          const previousCoordinate =
+            prevCoordinates[prevCoordinates.length - 1];
+          const newCoordinate = {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          };
+          const newDistance = calculateDistance(
+            previousCoordinate,
+            newCoordinate
+          );
+          return prevDistance + newDistance;
+        } else {
+          return prevDistance;
+        }
+      }, routeCoordinates); // Pass routeCoordinates as the second argument to updateLocation
     } catch (error) {
       console.error("Error updating location: ", error);
     }
