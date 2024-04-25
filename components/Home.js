@@ -10,6 +10,10 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import navigationArrow from "../assets/arrow.png";
 
+import { initializeApp } from "firebase/app";
+import { getDatabase, push, ref, onValue } from "firebase/database";
+import firebaseConfig from "./FirebaseConfig";
+
 export default function HomeScreen() {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
@@ -17,8 +21,30 @@ export default function HomeScreen() {
   const [isTracking, setIsTracking] = useState(false);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [distance, setDistance] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [startTime, setStartTime] = useState(null);
 
   const mapRef = useRef(null);
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  function saveRunToFirebase() {
+    const newRun = {
+      date: new Date().toISOString(),
+      distance: distance.toFixed(2),
+      duration: formatDuration(duration),
+      averageSpeed: averageSpeed.toFixed(2),
+    };
+
+    push(ref(database, "/runs"), newRun)
+      .then(() => {
+        console.log("Run saved successfully!");
+      })
+      .catch((error) => {
+        console.error("Error saving run: ", error);
+      });
+  }
 
   useEffect(() => {
     getLocation();
@@ -48,8 +74,13 @@ export default function HomeScreen() {
       setIsTracking(true);
       setRouteCoordinates([]);
       setDistance(0);
+      setDuration(0);
+      setStartTime(Date.now());
     } else {
       setIsTracking(false);
+      setStartTime(null);
+
+      saveRunToFirebase();
     }
   }
 
@@ -98,6 +129,7 @@ export default function HomeScreen() {
           return prevDistance;
         }
       }, routeCoordinates); // Pass routeCoordinates as the second argument to updateLocation
+      setDuration((Date.now() - startTime) / 1000);
     } catch (error) {
       console.error("Error updating location: ", error);
     }
@@ -157,6 +189,8 @@ export default function HomeScreen() {
     longitudeDelta: 0.0221,
   };
 
+  const averageSpeed = duration !== 0 ? (distance / duration) * 3600 : 0;
+
   // Interpolating points for smoother polyline
   const interpolatedRouteCoordinates = [];
   for (let i = 0; i < routeCoordinates.length - 1; i++) {
@@ -187,7 +221,15 @@ export default function HomeScreen() {
         )}
       </MapView>
       <View style={styles.infoContainer}>
-        <Text>Distance Travelled: {distance.toFixed(2)} km</Text>
+        <Text style={styles.text}>
+          Distance Travelled: {distance.toFixed(2)} km
+        </Text>
+        <Text style={styles.text}>Duration: {formatDuration(duration)}</Text>
+        <Text style={styles.text}>
+          Average Speed: {averageSpeed.toFixed(2)} km/h
+        </Text>
+      </View>
+      <View style={styles.buttonContainer}>
         <Button
           title={isTracking ? "Stop Tracking" : "Start Tracking"}
           onPress={startTracking}
@@ -195,6 +237,13 @@ export default function HomeScreen() {
       </View>
     </View>
   );
+}
+
+function formatDuration(durationInSeconds) {
+  const hours = Math.floor(durationInSeconds / 3600);
+  const minutes = Math.floor((durationInSeconds % 3600) / 60);
+  const seconds = durationInSeconds % 60;
+  return `${hours}:${minutes}:${seconds}`;
 }
 
 const styles = StyleSheet.create({
@@ -214,9 +263,20 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     position: "absolute",
-    top: 20,
-    left: 10,
-    right: 10,
+    bottom: 30,
+    left: 0,
+    right: 0,
     alignItems: "center",
+    backgroundColor: "rgba(128, 128, 128, 0.5)",
+  },
+  buttonContainer: {
+    position: "absolute",
+    left: 120,
+    top: 40,
+    width: 200,
+    height: 100,
+  },
+  text: {
+    fontSize: 16,
   },
 });
