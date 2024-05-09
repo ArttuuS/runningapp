@@ -1,13 +1,12 @@
 import { View, Text } from "react-native";
-import { initializeApp } from "firebase/app";
 import { getDatabase, push, ref, onValue } from "firebase/database";
-import firebaseConfig from "./FirebaseConfig";
 import { useEffect, useState } from "react";
 import { FlatList } from "react-native";
 
+import firebaseApp from "./FirebaseConfig";
+
 export default function AnalyticsScreen() {
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
+  const database = getDatabase(firebaseApp);
 
   const [runs, setRuns] = useState([]);
 

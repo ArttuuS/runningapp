@@ -10,9 +10,8 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import navigationArrow from "../assets/arrow.png";
 
-import { initializeApp } from "firebase/app";
 import { getDatabase, push, ref, onValue } from "firebase/database";
-import firebaseConfig from "./FirebaseConfig";
+import firebaseApp from "./FirebaseConfig";
 
 export default function HomeScreen() {
   const [location, setLocation] = useState(null);
@@ -26,8 +25,7 @@ export default function HomeScreen() {
 
   const mapRef = useRef(null);
 
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
+  const database = getDatabase(firebaseApp);
 
   function saveRunToFirebase() {
     const newRun = {
