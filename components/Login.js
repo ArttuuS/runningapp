@@ -4,7 +4,6 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
 import firebaseApp from "./FirebaseConfig";
@@ -12,7 +11,7 @@ import { getDatabase, ref, push, onValue, set } from "firebase/database";
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // Track user authentication state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,19 +50,6 @@ export default function LoginScreen() {
       .catch((error) => setError(error.message));
   };
 
-  const handleSignUp = () => {
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log(userCredential);
-        const user = userCredential.user;
-        const userID = user.uid;
-        setEmail(""); // Clear input fields after sign up (optional)
-        setPassword("");
-        setError(null); // Clear any previous errors
-      })
-      .catch((error) => setError(error.message));
-  };
-
   const handleSignOut = () => {
     signOut(auth)
       .then(() => {
@@ -75,35 +61,42 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={(text) => setEmail(text)}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={(text) => setPassword(text)}
-        secureTextEntry
-      />
-      <Button title="Sign Up" onPress={handleSignUp} />
-      <Button title="Sign In" onPress={handleSignIn} />
-      <View>
-        {isAuthenticated ? (
-          <>
-            <Text>{`Signed In as ${email}`}</Text>
-            <Button onPress={handleSignOut} title="Sign Out" />
-          </>
-        ) : (
-          <Text>Signed Out</Text>
-        )}
-      </View>
+      {!isAuthenticated && (
+        <>
+          <View style={styles.registerButton}>
+            <Text style={styles.registerText}>Don't have an account yet?</Text>
+            <Button
+              title="Register"
+              onPress={() => navigation.navigate("Register")}
+            />
+          </View>
+          <Text style={styles.title}>Login</Text>
+          {error && <Text style={styles.error}>{error}</Text>}
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={(text) => setEmail(text)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+            secureTextEntry
+          />
+          <Button title="Sign In" onPress={handleSignIn} />
+        </>
+      )}
+
+      {isAuthenticated && (
+        <>
+          <Text>{`Signed In as ${email}`}</Text>
+          <Button onPress={handleSignOut} title="Sign Out" />
+        </>
+      )}
     </View>
   );
 }
@@ -132,5 +125,17 @@ const styles = StyleSheet.create({
   error: {
     color: "red",
     marginBottom: 10,
+  },
+  registerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    marginTop: 10,
+    marginLeft: 70,
+  },
+  registerText: {
+    marginRight: 10,
   },
 });
