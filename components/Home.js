@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Button,
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { Button } from "@rneui/themed";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import navigationArrow from "../assets/arrow.png";
@@ -60,6 +55,7 @@ export default function HomeScreen() {
     const formattedHours = String(hours).padStart(2, "0");
     const formattedMinutes = String(minutes % 60).padStart(2, "0");
     const formattedSeconds = String(seconds % 60).padStart(2, "0");
+
     return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
   };
 
@@ -70,7 +66,7 @@ export default function HomeScreen() {
       const newRun = {
         date: new Date().toISOString(),
         distance: distance.toFixed(2),
-        duration: duration,
+        duration: formatTime(elapsedTime),
         averageSpeed: averageSpeed.toFixed(2),
       };
 
@@ -312,7 +308,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     position: "absolute",
-    left: 120,
+    left: 80,
     top: 40,
     width: 200,
     height: 100,

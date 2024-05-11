@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
   getAuth,
@@ -10,6 +10,7 @@ import firebaseApp from "./FirebaseConfig";
 import { getDatabase, ref, push, onValue, set } from "firebase/database";
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
+import { Input, Button } from "@rneui/themed";
 
 export default function RegisterScreen() {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // Track user authentication state
@@ -56,7 +57,7 @@ export default function RegisterScreen() {
       </View>
       <Text style={styles.title}>Register</Text>
       {error && <Text style={styles.error}>{error}</Text>}
-      <TextInput
+      <Input
         style={styles.input}
         placeholder="Email"
         value={email}
@@ -64,7 +65,7 @@ export default function RegisterScreen() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
+      <Input
         style={styles.input}
         placeholder="Password"
         value={password}

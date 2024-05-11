@@ -1,6 +1,7 @@
 import { View, Text } from "react-native";
 import React, { useEffect, useState } from "react";
 import { FlatList } from "react-native";
+import { ListItem } from "@rneui/themed";
 
 import { getDatabase, push, ref, onValue } from "firebase/database";
 import firebaseApp from "./FirebaseConfig";
@@ -46,15 +47,35 @@ export default function AnalyticsScreen({ navigation }) {
     }, [])
   );
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear().toString();
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  };
+
+  const renderItem = ({ item }) => (
+    <ListItem bottomDivider>
+      <ListItem.Content>
+        <ListItem.Title>Date: {formatDate(item.date)}</ListItem.Title>
+        <ListItem.Subtitle>Distance: {item.distance} km</ListItem.Subtitle>
+        <ListItem.Subtitle>Duration: {item.duration}</ListItem.Subtitle>
+        <ListItem.Subtitle>
+          Average Speed:{item.averageSpeed} Km/h
+        </ListItem.Subtitle>
+      </ListItem.Content>
+    </ListItem>
+  );
+
   return (
     <View>
       <FlatList
         data={runs}
-        renderItem={({ item }) => (
-          <Text>
-            {item.date} {item.distance} {item.duration} {item.averageSpeed}
-          </Text>
-        )}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => index.toString()}
       />
     </View>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import {
   getAuth,
   onAuthStateChanged,
@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import firebaseApp from "./FirebaseConfig";
 import { getDatabase, ref, push, onValue, set } from "firebase/database";
+import { Input, Button } from "@rneui/themed";
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 
@@ -42,8 +43,8 @@ export default function LoginScreen({ navigation }) {
             set(userRunsRef, {});
           }
         });
+        setEmail(user.email); // Update email state
         setIsAuthenticated(true); // Update state after successful sign in
-        setEmail(""); // Clear input fields after sign in (optional)
         setPassword("");
         setError(null); // Clear any previous errors
       })
@@ -72,7 +73,7 @@ export default function LoginScreen({ navigation }) {
           </View>
           <Text style={styles.title}>Login</Text>
           {error && <Text style={styles.error}>{error}</Text>}
-          <TextInput
+          <Input
             style={styles.input}
             placeholder="Email"
             value={email}
@@ -80,7 +81,7 @@ export default function LoginScreen({ navigation }) {
             keyboardType="email-address"
             autoCapitalize="none"
           />
-          <TextInput
+          <Input
             style={styles.input}
             placeholder="Password"
             value={password}
@@ -93,7 +94,9 @@ export default function LoginScreen({ navigation }) {
 
       {isAuthenticated && (
         <>
-          <Text>{`Signed In as ${email}`}</Text>
+          <View style={styles.signedInText}>
+            <Text>{`Signed in as ${email}`}</Text>
+          </View>
           <Button onPress={handleSignOut} title="Sign Out" />
         </>
       )}
@@ -137,5 +140,8 @@ const styles = StyleSheet.create({
   },
   registerText: {
     marginRight: 10,
+  },
+  signedInText: {
+    marginBottom: 20,
   },
 });

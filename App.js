@@ -16,7 +16,7 @@ const LoginStack = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Login"
+        name="LoginStack"
         component={LoginScreen}
         options={{ headerShown: false }}
       />
