@@ -16,6 +16,7 @@ export default function RegisterScreen() {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // Track user authentication state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState(""); // State for username
   const [error, setError] = useState(null); // State for handling errors
 
   const navigation = useNavigation();
@@ -23,10 +24,7 @@ export default function RegisterScreen() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setIsAuthenticated(true);
-        setEmail(user.email); // Fetch and set the user's email
-      } else {
-        setIsAuthenticated(false);
+        navigation.goBack(); // Navigate back to the login screen if user is authenticated
       }
     });
 
@@ -39,8 +37,22 @@ export default function RegisterScreen() {
         console.log(userCredential);
         const user = userCredential.user;
         const userID = user.uid;
+
+        // Save the username to the database
+        set(ref(database, `users/${userID}`), {
+          email: email,
+          username: username,
+        })
+          .then(() => {
+            console.log("Username saved successfully!");
+          })
+          .catch((error) => {
+            console.error("Error saving username: ", error);
+          });
+
         setEmail(""); // Clear input fields after sign up (optional)
         setPassword("");
+        setUsername("");
         setError(null); // Clear any previous errors
       })
       .catch((error) => setError(error.message));
@@ -57,6 +69,13 @@ export default function RegisterScreen() {
       </View>
       <Text style={styles.title}>Register</Text>
       {error && <Text style={styles.error}>{error}</Text>}
+      <Input
+        style={styles.input}
+        placeholder="Username"
+        value={username}
+        onChangeText={(text) => setUsername(text)}
+        autoCapitalize="none"
+      />
       <Input
         style={styles.input}
         placeholder="Email"

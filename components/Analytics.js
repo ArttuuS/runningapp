@@ -22,11 +22,14 @@ export default function AnalyticsScreen({ navigation }) {
       const fetchRunsData = () => {
         if (user) {
           const userID = user.uid;
-          const userRunsRef = ref(database, `/runs/${userID}`);
+          const userRunsRef = ref(database, `/runs/`);
           onValue(userRunsRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-              setRuns(Object.values(data));
+              const userRuns = Object.values(data).filter(
+                (run) => run.userID === userID
+              );
+              setRuns(userRuns);
             } else {
               setRuns([]);
             }

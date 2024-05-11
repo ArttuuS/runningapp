@@ -63,20 +63,28 @@ export default function HomeScreen() {
     const user = auth.currentUser;
     if (user) {
       const userID = user.uid;
-      const newRun = {
-        date: new Date().toISOString(),
-        distance: distance.toFixed(2),
-        duration: formatTime(elapsedTime),
-        averageSpeed: averageSpeed.toFixed(2),
-      };
 
-      push(ref(database, `/runs/${userID}`), newRun)
-        .then(() => {
-          console.log("Run saved successfully!");
-        })
-        .catch((error) => {
-          console.error("Error saving run: ", error);
-        });
+      const usernameRef = ref(database, `/users/${userID}/username`);
+      onValue(usernameRef, (snapshot) => {
+        const username = snapshot.val();
+
+        const newRun = {
+          username: username,
+          userID: userID,
+          date: new Date().toISOString(),
+          distance: distance.toFixed(2),
+          duration: formatTime(elapsedTime),
+          averageSpeed: averageSpeed.toFixed(2),
+        };
+
+        push(ref(database, `/runs`), newRun)
+          .then(() => {
+            console.log("Run saved successfully!");
+          })
+          .catch((error) => {
+            console.error("Error saving run: ", error);
+          });
+      });
     } else {
       console.error("User not authenticated.");
     }
