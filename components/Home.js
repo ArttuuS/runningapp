@@ -13,6 +13,8 @@ import navigationArrow from "../assets/arrow.png";
 import { getDatabase, push, ref, onValue } from "firebase/database";
 import firebaseApp from "./FirebaseConfig";
 
+import { getAuth } from "firebase/auth";
+
 export default function HomeScreen() {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
@@ -23,25 +25,65 @@ export default function HomeScreen() {
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState(null);
 
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const intervalRef = useRef(null);
+
   const mapRef = useRef(null);
+
+  const auth = getAuth(firebaseApp);
 
   const database = getDatabase(firebaseApp);
 
-  function saveRunToFirebase() {
-    const newRun = {
-      date: new Date().toISOString(),
-      distance: distance.toFixed(2),
-      duration: formatDuration(duration),
-      averageSpeed: averageSpeed.toFixed(2),
-    };
+  const toggleTimer = () => {
+    if (isRunning) {
+      clearInterval(intervalRef.current);
+    } else {
+      const startTime = Date.now() - elapsedTime;
+      intervalRef.current = setInterval(() => {
+        setElapsedTime(Date.now() - startTime);
+      }, 100);
+    }
+    setIsRunning(!isRunning);
+  };
 
-    push(ref(database, "/runs"), newRun)
-      .then(() => {
-        console.log("Run saved successfully!");
-      })
-      .catch((error) => {
-        console.error("Error saving run: ", error);
-      });
+  const resetTimer = () => {
+    clearInterval(intervalRef.current);
+    setIsRunning(false);
+    setElapsedTime(0);
+  };
+
+  const formatTime = (time) => {
+    const seconds = Math.floor(time / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const formattedHours = String(hours).padStart(2, "0");
+    const formattedMinutes = String(minutes % 60).padStart(2, "0");
+    const formattedSeconds = String(seconds % 60).padStart(2, "0");
+    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+  };
+
+  function saveRunToFirebase() {
+    const user = auth.currentUser;
+    if (user) {
+      const userID = user.uid;
+      const newRun = {
+        date: new Date().toISOString(),
+        distance: distance.toFixed(2),
+        duration: duration,
+        averageSpeed: averageSpeed.toFixed(2),
+      };
+
+      push(ref(database, `/runs/${userID}`), newRun)
+        .then(() => {
+          console.log("Run saved successfully!");
+        })
+        .catch((error) => {
+          console.error("Error saving run: ", error);
+        });
+    } else {
+      console.error("User not authenticated.");
+    }
   }
 
   useEffect(() => {
@@ -74,11 +116,19 @@ export default function HomeScreen() {
       setDistance(0);
       setDuration(0);
       setStartTime(Date.now());
+      setIsRunning(true);
+      const startTime = Date.now();
+      intervalRef.current = setInterval(() => {
+        setElapsedTime(Date.now() - startTime);
+      }, 100);
     } else {
       setIsTracking(false);
       setStartTime(null);
 
       saveRunToFirebase();
+      // Stop the stopwatch
+      clearInterval(intervalRef.current);
+      setIsRunning(false);
     }
   }
 
@@ -222,7 +272,7 @@ export default function HomeScreen() {
         <Text style={styles.text}>
           Distance Travelled: {distance.toFixed(2)} km
         </Text>
-        <Text style={styles.text}>Duration: {formatDuration(duration)}</Text>
+        <Text style={styles.text}>Duration: {formatTime(elapsedTime)}</Text>
         <Text style={styles.text}>
           Average Speed: {averageSpeed.toFixed(2)} km/h
         </Text>
@@ -235,13 +285,6 @@ export default function HomeScreen() {
       </View>
     </View>
   );
-}
-
-function formatDuration(durationInSeconds) {
-  const hours = Math.floor(durationInSeconds / 3600);
-  const minutes = Math.floor((durationInSeconds % 3600) / 60);
-  const seconds = durationInSeconds % 60;
-  return `${hours}:${minutes}:${seconds}`;
 }
 
 const styles = StyleSheet.create({

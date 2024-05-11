@@ -8,8 +8,9 @@ import {
   signOut,
 } from "firebase/auth";
 import firebaseApp from "./FirebaseConfig";
-
+import { getDatabase, ref, push, onValue, set } from "firebase/database";
 const auth = getAuth(firebaseApp);
+const database = getDatabase(firebaseApp);
 
 export default function LoginScreen() {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // Track user authentication state
@@ -34,6 +35,14 @@ export default function LoginScreen() {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential);
+        const user = userCredential.user;
+        const userID = user.uid;
+        const userRunsRef = ref(database, `/runs/${userID}`);
+        onValue(userRunsRef, (snapshot) => {
+          if (!snapshot.exists()) {
+            set(userRunsRef, {});
+          }
+        });
         setIsAuthenticated(true); // Update state after successful sign in
         setEmail(""); // Clear input fields after sign in (optional)
         setPassword("");
@@ -46,6 +55,8 @@ export default function LoginScreen() {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential);
+        const user = userCredential.user;
+        const userID = user.uid;
         setEmail(""); // Clear input fields after sign up (optional)
         setPassword("");
         setError(null); // Clear any previous errors
