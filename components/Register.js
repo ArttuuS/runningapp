@@ -24,7 +24,11 @@ export default function RegisterScreen() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        setIsAuthenticated(true);
+        setEmail(user.email); // Fetch and set the user's email
         navigation.goBack(); // Navigate back to the login screen if user is authenticated
+      } else {
+        setIsAuthenticated(false);
       }
     });
 

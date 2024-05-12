@@ -7,8 +7,9 @@ import {
   signOut,
 } from "firebase/auth";
 import firebaseApp from "./FirebaseConfig";
-import { getDatabase, ref, push, onValue, set } from "firebase/database";
+import { getDatabase, ref, onValue, set } from "firebase/database";
 import { Input, Button } from "@rneui/themed";
+
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 

@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { FlatList } from "react-native";
 import { ListItem } from "@rneui/themed";
 
@@ -75,11 +75,15 @@ export default function AnalyticsScreen({ navigation }) {
 
   return (
     <View>
-      <FlatList
-        data={runs}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
-      />
+      {runs.length === 0 ? (
+        <Text>No recorded runs</Text>
+      ) : (
+        <FlatList
+          data={runs}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      )}
     </View>
   );
 }
