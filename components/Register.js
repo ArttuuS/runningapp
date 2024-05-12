@@ -1,32 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Input, Button } from "@rneui/themed";
+
 import {
   getAuth,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
 import firebaseApp from "./FirebaseConfig";
-import { getDatabase, ref, push, onValue, set } from "firebase/database";
+import { getDatabase, ref, set } from "firebase/database";
+
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
-import { Input, Button } from "@rneui/themed";
 
 export default function RegisterScreen() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // Track user authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState(""); // State for username
-  const [error, setError] = useState(null); // State for handling errors
-
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState(null);
   const navigation = useNavigation();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
-        setEmail(user.email); // Fetch and set the user's email
-        navigation.goBack(); // Navigate back to the login screen if user is authenticated
+        setEmail(user.email);
+        navigation.goBack();
       } else {
         setIsAuthenticated(false);
       }
@@ -42,7 +43,6 @@ export default function RegisterScreen() {
         const user = userCredential.user;
         const userID = user.uid;
 
-        // Save the username to the database
         set(ref(database, `users/${userID}`), {
           email: email,
           username: username,
@@ -54,10 +54,10 @@ export default function RegisterScreen() {
             console.error("Error saving username: ", error);
           });
 
-        setEmail(""); // Clear input fields after sign up (optional)
+        setEmail("");
         setPassword("");
         setUsername("");
-        setError(null); // Clear any previous errors
+        setError(null);
       })
       .catch((error) => setError(error.message));
   };

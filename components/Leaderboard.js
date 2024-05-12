@@ -15,20 +15,20 @@ export default function LeaderboardScreen() {
       onValue(runsRef, (snapshot) => {
         const runs = snapshot.val();
         if (runs) {
-          const distances = {}; // Object to store total distance for each user // Calculate total distance for each user
+          const distances = {};
 
           Object.values(runs).forEach((run) => {
             const { username, distance } = run;
             distances[username] =
               (distances[username] || 0) + parseFloat(distance);
-          }); // Convert distances object to an array of objects
+          });
 
           const leaderboard = Object.entries(distances).map(
             ([username, distance]) => ({
-              username: username, // For simplicity, use userID as username
-              distance: distance.toFixed(2), // Convert distance to string with two decimal places
+              username: username,
+              distance: distance.toFixed(2),
             })
-          ); // Sort the leaderboard by distance in descending order
+          );
 
           leaderboard.sort(
             (a, b) => parseFloat(b.distance) - parseFloat(a.distance)

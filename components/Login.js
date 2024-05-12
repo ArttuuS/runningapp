@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { getDatabase, ref, onValue, set } from "firebase/database";
+import { Input, Button } from "@rneui/themed";
+
 import {
   getAuth,
   onAuthStateChanged,
@@ -7,23 +10,21 @@ import {
   signOut,
 } from "firebase/auth";
 import firebaseApp from "./FirebaseConfig";
-import { getDatabase, ref, onValue, set } from "firebase/database";
-import { Input, Button } from "@rneui/themed";
 
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 
 export default function LoginScreen({ navigation }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // Track user authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null); // State for handling errors
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
-        setEmail(user.email); // Fetch and set the user's email
+        setEmail(user.email);
       } else {
         setIsAuthenticated(false);
       }
@@ -35,7 +36,6 @@ export default function LoginScreen({ navigation }) {
   const handleSignIn = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        console.log(userCredential);
         const user = userCredential.user;
         const userID = user.uid;
         const userRunsRef = ref(database, `/runs/${userID}`);
@@ -44,10 +44,10 @@ export default function LoginScreen({ navigation }) {
             set(userRunsRef, {});
           }
         });
-        setEmail(user.email); // Update email state
-        setIsAuthenticated(true); // Update state after successful sign in
+        setEmail(user.email);
+        setIsAuthenticated(true);
         setPassword("");
-        setError(null); // Clear any previous errors
+        setError(null);
       })
       .catch((error) => setError(error.message));
   };
@@ -56,7 +56,7 @@ export default function LoginScreen({ navigation }) {
     signOut(auth)
       .then(() => {
         console.log("sign out successful");
-        setIsAuthenticated(false); // Update state after sign out
+        setIsAuthenticated(false);
       })
       .catch((error) => console.log(error));
   };

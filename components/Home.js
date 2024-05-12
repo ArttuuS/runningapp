@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Modal } from "react-native";
 import { Button } from "@rneui/themed";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
@@ -7,7 +7,6 @@ import navigationArrow from "../assets/arrow.png";
 
 import { getDatabase, push, ref, onValue } from "firebase/database";
 import firebaseApp from "./FirebaseConfig";
-
 import { getAuth } from "firebase/auth";
 
 export default function HomeScreen() {
@@ -19,16 +18,16 @@ export default function HomeScreen() {
   const [distance, setDistance] = useState(0);
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState(null);
-
+  const [modalVisible, setModalVisible] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const intervalRef = useRef(null);
-
   const mapRef = useRef(null);
 
   const auth = getAuth(firebaseApp);
-
   const database = getDatabase(firebaseApp);
+
+  //Seperated stopwatch that updates continuesly (location updates currently every 500ms)
 
   const toggleTimer = () => {
     if (isRunning) {
@@ -126,20 +125,25 @@ export default function HomeScreen() {
         setElapsedTime(Date.now() - startTime);
       }, 100);
     } else {
-      setIsTracking(false);
-      setStartTime(null);
-
-      saveRunToFirebase();
-      // Stop the stopwatch
-      clearInterval(intervalRef.current);
-      setIsRunning(false);
+      setModalVisible(true);
     }
   }
+
+  const stopTracking = () => {
+    setIsTracking(false);
+    setStartTime(null);
+    saveRunToFirebase();
+    clearInterval(intervalRef.current);
+    setIsRunning(false);
+    setModalVisible(false);
+  };
+
+  //LOCATION TRACKING AND POLYLINE DRAWING DONE WITH CHATGPT
 
   useEffect(() => {
     let interval;
     if (isTracking) {
-      interval = setInterval(() => updateLocation(routeCoordinates), 500); // Pass routeCoordinates as an argument
+      interval = setInterval(() => updateLocation(routeCoordinates), 500); // Pass routeCoordinates as an argument (now the location updates between every 500ms )
     } else {
       clearInterval(interval);
     }
@@ -222,6 +226,17 @@ export default function HomeScreen() {
     return interpolatedPoints;
   }
 
+  // Interpolating points for smoother polyline
+  const interpolatedRouteCoordinates = [];
+  for (let i = 0; i < routeCoordinates.length - 1; i++) {
+    const interpolatedPoints = interpolatePoints(
+      routeCoordinates[i],
+      routeCoordinates[i + 1],
+      10 // Number of points to interpolate between each pair of coordinates
+    );
+    interpolatedRouteCoordinates.push(...interpolatedPoints);
+  }
+
   if (error) {
     return <Text>{error}</Text>;
   }
@@ -234,25 +249,14 @@ export default function HomeScreen() {
     );
   }
 
+  const averageSpeed = duration !== 0 ? (distance / duration) * 3600 : 0;
+
   const initialRegion = {
     latitude: location.latitude,
     longitude: location.longitude,
     latitudeDelta: 0.0322,
     longitudeDelta: 0.0221,
   };
-
-  const averageSpeed = duration !== 0 ? (distance / duration) * 3600 : 0;
-
-  // Interpolating points for smoother polyline
-  const interpolatedRouteCoordinates = [];
-  for (let i = 0; i < routeCoordinates.length - 1; i++) {
-    const interpolatedPoints = interpolatePoints(
-      routeCoordinates[i],
-      routeCoordinates[i + 1],
-      10 // Number of points to interpolate between each pair of coordinates
-    );
-    interpolatedRouteCoordinates.push(...interpolatedPoints);
-  }
 
   return (
     <View style={styles.container}>
@@ -287,6 +291,26 @@ export default function HomeScreen() {
           onPress={startTracking}
         />
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>
+              Do you really want to stop tracking?
+            </Text>
+            <View style={styles.modalButtons}>
+              <Button title="Yes" onPress={stopTracking} />
+              <Button title="No" onPress={() => setModalVisible(false)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -323,5 +347,26 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
   },
 });

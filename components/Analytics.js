@@ -2,11 +2,11 @@ import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { FlatList } from "react-native";
 import { ListItem } from "@rneui/themed";
+import { useFocusEffect } from "@react-navigation/native";
 
-import { getDatabase, push, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue } from "firebase/database";
 import firebaseApp from "./FirebaseConfig";
 import { getAuth } from "firebase/auth";
-import { useFocusEffect } from "@react-navigation/native";
 
 const database = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -14,7 +14,6 @@ const auth = getAuth(firebaseApp);
 export default function AnalyticsScreen({ navigation }) {
   const [runs, setRuns] = useState([]);
 
-  // Fetch runs data every time the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       const user = auth.currentUser;
@@ -35,7 +34,6 @@ export default function AnalyticsScreen({ navigation }) {
             }
           });
         } else {
-          // Clear runs data if user is not authenticated
           setRuns([]);
         }
       };
@@ -43,7 +41,6 @@ export default function AnalyticsScreen({ navigation }) {
       fetchRunsData();
       const unsubscribe = auth.onAuthStateChanged(fetchRunsData);
 
-      // Cleanup function
       return () => {
         unsubscribe();
       };

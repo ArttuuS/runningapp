@@ -9,6 +9,7 @@ import LeaderboardScreen from "./components/Leaderboard";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Header } from "@rneui/themed";
 import RegisterScreen from "./components/Register";
+
 import firebaseApp from "./components/FirebaseConfig";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { View } from "react-native";
@@ -42,7 +43,7 @@ const LoginStack = () => {
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // Track user authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -57,7 +58,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Check if the user is authenticated
     if (isAuthenticated) {
       setIsLoggedIn(true);
     } else {
